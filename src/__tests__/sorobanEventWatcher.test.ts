@@ -106,12 +106,17 @@ describe("SorobanEventWatcher", () => {
 
     // getLatestLedger fails and returns 0.
 
-    // Second poll: getLatestLedger succeeds, but getEvents fails -> logged.
-    (global.fetch as any)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ result: { sequence: 1000 } }) })
-      .mockResolvedValueOnce({ ok: false, statusText: "Bad Gateway" });
-
     // Trigger a manual poll with a cursor so getEvents fails directly.
+    // @ts-ignore
+    sorobanEventWatcher.lastCursor = "prev-cursor";
+    // @ts-ignore
+    sorobanEventWatcher.isRunning = true;
+
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: false,
+      statusText: "Bad Gateway",
+    });
+
     // @ts-ignore
     await sorobanEventWatcher.poll();
 
