@@ -16,6 +16,7 @@ interface ImportMetaEnv {
   readonly VITE_SPOOVUALT_PROXY_SECRET?: string;
   readonly VITE_LOG_CHUNK_SIZE?: string;
   readonly VITE_CONTRACT_DEPLOY_BLOCK?: string;
+  readonly VITE_STELLAR_CONTRACT_ADDRESS?: string;
 }
 
 interface ImportMeta {

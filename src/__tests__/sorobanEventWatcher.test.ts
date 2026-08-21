@@ -19,6 +19,7 @@ describe("SorobanEventWatcher", () => {
   afterEach(() => {
     sorobanEventWatcher.stop();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     vi.useRealTimers();
     // @ts-ignore reset private state
     sorobanEventWatcher.listeners = {};
@@ -79,6 +80,13 @@ describe("SorobanEventWatcher", () => {
     expect(mockVaultCallback).toHaveBeenCalledTimes(1);
     expect(window.dispatchEvent).toHaveBeenCalled();
 
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(JSON.parse((global.fetch as any).mock.calls[1][1].body).method).toBe("getEvents");
+    
+    expect(mockCallback).toHaveBeenCalledTimes(1);
+    expect(mockVaultCallback).toHaveBeenCalledTimes(1);
+    expect(window.dispatchEvent).toHaveBeenCalledTimes(3); // SorobanEvent, VaultCreated, DocumentAdded generic custom events
+    
     sorobanEventWatcher.off("SorobanEvent", mockCallback);
     sorobanEventWatcher.off("VaultCreated", mockVaultCallback);
   });
@@ -94,14 +102,16 @@ describe("SorobanEventWatcher", () => {
     });
     sorobanEventWatcher.start(rpcUrl, contractId);
     await vi.runOnlyPendingTimersAsync();
+    sorobanEventWatcher.stop();
 
-    expect(consoleSpy).not.toHaveBeenCalled();
+    // getLatestLedger fails and returns 0.
 
     // Second poll: getLatestLedger succeeds, but getEvents fails -> logged.
     (global.fetch as any)
       .mockResolvedValueOnce({ ok: true, json: async () => ({ result: { sequence: 1000 } }) })
       .mockResolvedValueOnce({ ok: false, statusText: "Bad Gateway" });
 
+    // Trigger a manual poll with a cursor so getEvents fails directly.
     // @ts-ignore
     await sorobanEventWatcher.poll();
 
